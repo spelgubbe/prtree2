@@ -49,24 +49,19 @@ public class SimpleMBR implements MBR {
 	}
     }
 
-    // get union mbr for a list of objects
-    public <T> SimpleMBR (List<T> lst, MBRConverter<T> converter) {
-	int dims = converter.getDimensions ();
+    public SimpleMBR (List<MBR> lst, int dims) {
 	values = new double[dims * 2];
-	for (T t : lst) {
-	    for (int i = 0; i < dims; i++) {
-		values[2 * i] = Math.min (values[2 * i], converter.getMin (i, t));
-		values[2 * i + 1] = Math.max (values[2 * i + 1], converter.getMax (i, t));
-	    }
+	MBR first = lst.get (0);
+	// Build initial MBR to not have all zeros (which would be incorrect).
+	for (int d = 0; d < dims; d++) {
+	    values[2 * d] = first.getMin (d);
+	    values[2 * d + 1] = first.getMax (d);
 	}
-    }
-
-    public <T> SimpleMBR (List<MBR> lst, int dims) {
-	values = new double[dims * 2];
-	for (MBR t : lst) {
-	    for (int i = 0; i < dims; i++) {
-		values[2 * i] = Math.min (values[2 * i], t.getMin (i));
-		values[2 * i + 1] = Math.max (values[2 * i + 1], t.getMax (i));
+	for (int i = 1; i < lst.size (); i++) {
+	    MBR t = lst.get (i);
+	    for (int d = 0; d < dims; d++) {
+		values[2 * d] = Math.min (values[2 * d], t.getMin (d));
+		values[2 * d + 1] = Math.max (values[2 * d + 1], t.getMax (d));
 	    }
 	}
     }
