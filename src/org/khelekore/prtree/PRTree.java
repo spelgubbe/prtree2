@@ -30,13 +30,20 @@ import java.util.function.Supplier;
 public class PRTree<T> {
 
     private ConcurrencyPolicy concurrencyPolicy = ConcurrencyPolicy.MULTI_THREAD_SAFE;
-    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock (false);
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock (false);
     // count modifications in order to realize when iterators are invalid
     private int modificationCount = 0;
 
-    private MBRConverter<T> converter;
-    private int branchFactor;
-
+    private final MBRConverter<T> converter;
+    /**
+     * The upper bound of the branch factor. The largest number of children allowed for a node.
+     * This upper bound is respected in all cases in this class.
+     */
+    private final int branchFactor;
+    /**
+     * Lower bound of the branch factor. Simply the smallest number of children allowed for a node.
+     * There is no guarantee that this lower bound is respected after having built a PR-tree.
+     */
     private int minBranchFactor;
 
     private Node<T> root;
@@ -730,7 +737,7 @@ public class PRTree<T> {
 
 	public boolean update (T x, T y) {
 	    if (delete (x)) {
-		insert (x);
+		insert (y);
 		return true;
 	    }
 	    return false;
@@ -776,7 +783,7 @@ public class PRTree<T> {
 	    List<Node<T>> path = new ArrayList<> ();
 	    int depth = getDepthFromNodeHeight (nodeHeight);
 	    root.RStarChooseSubtreePath (xMBR, converter, path);
-	    Node<T> last = path.get (path.size () - 1);
+	    //Node<T> last = path.get (path.size () - 1);
 	    //assertAllChildrenHaveSameClass (last);
 	    return path.subList (0, depth);
 	}
@@ -884,7 +891,6 @@ public class PRTree<T> {
 	    int depth = getDepthFromNodeHeight (nodeHeight);
 	    // add depth to cache so that no more reinsertions on this level can happen
 	    levelCache.add (nodeHeight);
-	    reinsertCalls++;
 	    //System.out.printf("Reinsert is called: %d times in total\n", reinsertCalls);
 	    if (node instanceof LeafNode<T> leafNode) {
 
@@ -1085,8 +1091,6 @@ public class PRTree<T> {
 	}
     }
 
-    private int reinsertCalls = 0;
-
     private void propagateMBRChanges (List<Node<T>> path) {
 	for (int i = path.size () - 1; i >= 0; i--) {
 	    Node<T> cur = path.get (i);
@@ -1102,7 +1106,6 @@ public class PRTree<T> {
 	    System.out.println ("FAILED TO REMOVE NODE");
 	    System.out.println ("###################");
 	}
-	//System.out.println("Splitting current node here");
 	List<Node<T>> newNodes = splitter.apply (child);
 	parent.insertChild (newNodes.get (0));
 	parent.insertChild (newNodes.get (1));
@@ -1144,7 +1147,6 @@ public class PRTree<T> {
 	    Node<T> parent = path.get (i - 1);
 
 	    if (cur.size () < minBranchFactor) {
-		//System.out.println("Condensing tree...");
 		nodeList.set (i, cur); // record node depth using index i, in case of invalid tree
 		// need to remove cur as we are to reinsert all it's children after this
 		boolean removeSuccess = parent.removeChild (cur);
@@ -1321,11 +1323,6 @@ public class PRTree<T> {
 	}
 
 	public boolean hasNext () {
-	    // temp logging
-	    if (next == null) {
-		//System.out.println("Exhausted find iterator. Stats:");
-		//System.out.printf("Data nodes visited = %d, nodes visited = %d\n", dataNodesVisited, visitedNodes);
-	    }
 	    return next != null;
 	}
 
