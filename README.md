@@ -1,5 +1,21 @@
 During my thesis project I have worked mainly on implementing methods for modifying an R-tree in the PR-tree code found at http://khelekore.org/prtree, and performing experiments to see which one should be preferred when the objective is to maintain fast query performance. The PR-tree is a special R-tree (a common spatial index) that has a performance guarantee for spatial queries. The PR-tree was not modifiable before, and building the spatial index could be very slow for larger inputs. 
 
+## Building
+
+The project uses the checked-in Gradle Wrapper, so no system-wide Gradle installation is required. A JDK 17 or newer is required; generated class files target Java 17.
+
+```shell
+./gradlew build
+```
+
+The normal build runs the correctness-focused JUnit suite and creates the library, source, and Javadoc JARs under `build/libs`. The original long-running and hand-timed tests remain available separately:
+
+```shell
+./gradlew historicalTest
+```
+
+On Windows, use `gradlew.bat` in place of `./gradlew`.
+
 The changes I have made do not affect any existing code using the PR-tree or its behavior except for the fact that arrays of objects in nodes, have been exchanged for ArrayLists. This adds a constant memory overhead per node (for input size n there are about n/B nodes, where B is typically 8 or larger).
 
 Modifications to the new R-tree, being insertions or deletions, can be done with one of two policies. Either the algorithms specified by Guttman (a standard R-tree) are used, or the algorithms specified by Beckmann et al. (2000) (called the R*-tree) are used. The R*-tree algorithms is set to be the default as it was found to produce higher quality R-trees for query (find) performance, during the thesis project.
