@@ -16,6 +16,16 @@ The normal build runs the correctness-focused JUnit suite and creates the librar
 
 On Windows, use `gradlew.bat` in place of `./gradlew`.
 
+## Benchmarking
+
+The JMH suite currently contains a focused R*-tree node-split benchmark. Run it with:
+
+```shell
+./gradlew jmh
+```
+
+The benchmark covers branch factors 8, 32, and 128 and reports both execution time and allocation data. JSON results are written below `build/results/jmh`.
+
 The changes I have made do not affect any existing code using the PR-tree or its behavior except for the fact that arrays of objects in nodes, have been exchanged for ArrayLists. This adds a constant memory overhead per node (for input size n there are about n/B nodes, where B is typically 8 or larger).
 
 Modifications to the new R-tree, being insertions or deletions, can be done with one of two policies. Either the algorithms specified by Guttman (a standard R-tree) are used, or the algorithms specified by Beckmann et al. (2000) (called the R*-tree) are used. The R*-tree algorithms is set to be the default as it was found to produce higher quality R-trees for query (find) performance, during the thesis project.

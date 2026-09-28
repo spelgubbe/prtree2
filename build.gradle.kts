@@ -4,6 +4,7 @@ import org.gradle.api.tasks.testing.Test
 
 plugins {
     `java-library`
+    id("me.champeau.jmh") version "0.7.3"
 }
 
 repositories {
@@ -21,6 +22,7 @@ sourceSets {
     main {
         java {
             setSrcDirs(listOf("src"))
+            exclude("jmh/**")
             exclude("org/khelekore/prtree/junit/**")
         }
     }
@@ -34,6 +36,12 @@ sourceSets {
 
 dependencies {
     testImplementation("junit:junit:4.13.2")
+}
+
+jmh {
+    jmhVersion = "1.37"
+    resultFormat = "JSON"
+    profilers = listOf("gc")
 }
 
 tasks.withType<JavaCompile>().configureEach {
