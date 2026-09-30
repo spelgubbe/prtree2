@@ -356,8 +356,8 @@ class NodeSplitter<T> {
 	List<X> nodesSortedOnMax = nodes.stream ().sorted (comparator.maxInAscOrderComp (axis)).toList ();
 	List<MBR> maxSorted = nodesSortedOnMax.stream ().map (n -> mbrProvider.apply (n, converter)).toList ();
 
-	IntDouble indexValMin = splitMinSumOfOverlaps (m, M, dimensions, minSorted);
-	IntDouble indexValMax = splitMinSumOfOverlaps (m, M, dimensions, maxSorted);
+	IntDouble indexValMin = splitMinSumOfOverlaps2 (m, M, minSorted);
+	IntDouble indexValMax = splitMinSumOfOverlaps2 (m, M, maxSorted);
 
 	double overlapMin = indexValMin.d ();
 	double overlapMax = indexValMax.d ();
@@ -430,6 +430,53 @@ class NodeSplitter<T> {
 	    // O(d * M)
 	    SimpleMBR firstMbr = new SimpleMBR (first, dimensions);
 	    SimpleMBR secondMbr = new SimpleMBR (second, dimensions);
+
+	    double sumOfOverlaps = firstMbr.getIntersectionArea (secondMbr);
+
+	    if (sumOfOverlaps < minSumOfOverlaps) {
+		minSumOfOverlaps = sumOfOverlaps;
+		minOverlapSplitIdx = splitIdx;
+		minAreaValue = getAreaValue (firstMbr, secondMbr);
+	    } else if (sumOfOverlaps == minSumOfOverlaps) {
+		double areaValueCurrent = getAreaValue (firstMbr, secondMbr);
+		if (areaValueCurrent < minAreaValue) {
+		    minOverlapSplitIdx = splitIdx;
+		    minAreaValue = areaValueCurrent;
+		}
+	    }
+	}
+	return new IntDouble (minOverlapSplitIdx, minSumOfOverlaps);
+    }
+
+    private IntDouble splitMinSumOfOverlaps2 (int m, int M, List<MBR> mbrList) {
+	int numDistributions = M - 2 * m + 2; // >= 2
+	double minSumOfOverlaps = Double.POSITIVE_INFINITY;
+	int minOverlapSplitIdx = -1;
+	double minAreaValue = Double.POSITIVE_INFINITY;
+	// try to do this in O(d * M)
+	// the prefix / suffix arrays are larger than required, but for simplicity
+	int nMbrs = mbrList.size ();
+	MBR[] prefixes = new MBR[nMbrs];
+	MBR[] suffixes = new MBR[nMbrs];
+
+	prefixes[0] = mbrList.get (0);
+	for (int i = 1; i < nMbrs; i++) {
+	    prefixes[i] = prefixes[i - 1].union (mbrList.get (i));
+	}
+	suffixes[nMbrs - 1] = mbrList.get (nMbrs - 1);
+	for (int i = nMbrs - 2; i >= 0; i--) {
+	    suffixes[i] = suffixes[i + 1].union (mbrList.get (i));
+	}
+
+
+
+	for (int k = 1; k <= numDistributions; k++) {
+	    int splitIdx = m - 1 + k;
+	    // first group contains (m-1)+k entries
+	    // second group contains the rest (M+1 - (m-1+k) = M+2-m-k) >= m+1
+	    // O(1) work below
+	    MBR firstMbr = prefixes[splitIdx - 1]; // union of mbrs index 0 to splitIdx-1
+	    MBR secondMbr = suffixes[splitIdx]; // union of mbrs index splitIdx to mbrs.size
 
 	    double sumOfOverlaps = firstMbr.getIntersectionArea (secondMbr);
 

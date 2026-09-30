@@ -44,6 +44,12 @@ jmh {
     profilers = listOf("gc")
 }
 
+// A benchmark result is a measurement, not a reusable build artifact. Running
+// `jmh` explicitly should always take a fresh measurement.
+tasks.named("jmh") {
+    outputs.upToDateWhen { false }
+}
+
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
     options.release = 17
