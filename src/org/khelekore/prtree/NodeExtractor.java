@@ -8,13 +8,12 @@ class NodeExtractor<T> implements MBRValueExtractor<Node<T>> {
         this.converter = converter;
     }
 
-    public double[] getMBRValues (Node<T> x) {
+    @Override
+    public void writeMBRValues (Node<T> x, double[] destination, int offset) {
         int dims = converter.getDimensions ();
-        double[] ret = new double[2 * dims];
         for (int i = 0; i < dims; i++) {
-            ret[2 * i] = x.getMBR (converter).getMin (i);
-            ret[2 * i + 1] = x.getMBR (converter).getMax (i);
+            destination[offset + 2 * i] = x.getMBR (converter).getMin (i);
+            destination[offset + 2 * i + 1] = x.getMBR (converter).getMax (i);
         }
-        return ret;
     }
 }

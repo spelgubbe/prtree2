@@ -323,8 +323,7 @@ class PseudoPRTreeBuilder<T, N> {
 	double[] mbrData = new double[input.size () * blockSize];
 	for (int i = 0; i < input.size (); i++) {
 	    T t = input.get (i);
-	    double[] mbrValues = valueExtractor.getMBRValues (t);
-	    System.arraycopy (mbrValues, 0, mbrData, mbrValues.length * i, mbrValues.length);
+	    valueExtractor.writeMBRValues (t, mbrData, i * blockSize);
 	}
 	return mbrData;
     }

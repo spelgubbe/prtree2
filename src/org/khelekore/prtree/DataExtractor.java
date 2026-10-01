@@ -17,4 +17,13 @@ class DataExtractor<T> implements MBRValueExtractor<T> {
 	}
 	return ret;
     }
+
+    @Override
+    public void writeMBRValues (T x, double[] destination, int offset) {
+	int dims = converter.getDimensions ();
+	for (int i = 0; i < dims; i++) {
+	    destination[offset + 2 * i] = converter.getMin (i, x);
+	    destination[offset + 2 * i + 1] = converter.getMax (i, x);
+	}
+    }
 }
