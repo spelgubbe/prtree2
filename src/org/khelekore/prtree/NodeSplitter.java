@@ -316,11 +316,11 @@ class NodeSplitter<T> {
 	    // set the split axis to be the axis where this margin sum was the lowest
 	    nodesCopy.sort (comparator.getMinComparator (axis));
 	    List<MBR> mbrList = nodesCopy.stream ().map (n -> mbrProvider.apply (n, converter)).toList ();
-	    double minSortedMarginSum = sumOfDistributionMargins (minBranchFactor, maxBranchFactor, D, mbrList);
+	    double minSortedMarginSum = sumOfDistributionMargins (minBranchFactor, maxBranchFactor, mbrList);
 
 	    nodesCopy.sort (comparator.getMaxComparator (axis));
 	    mbrList = nodesCopy.stream ().map (n -> mbrProvider.apply (n, converter)).toList ();
-	    double maxSortedMarginSum = sumOfDistributionMargins (minBranchFactor, maxBranchFactor, D, mbrList);
+	    double maxSortedMarginSum = sumOfDistributionMargins (minBranchFactor, maxBranchFactor, mbrList);
 
 	    // choose the axis which has the minimum sum of margins (sum over the two sorts)
 	    // this is the approach they choose to use in the R*-tree paper
@@ -356,8 +356,8 @@ class NodeSplitter<T> {
 	List<X> nodesSortedOnMax = nodes.stream ().sorted (comparator.maxInAscOrderComp (axis)).toList ();
 	List<MBR> maxSorted = nodesSortedOnMax.stream ().map (n -> mbrProvider.apply (n, converter)).toList ();
 
-	IntDouble indexValMin = splitMinSumOfOverlaps2 (m, M, minSorted);
-	IntDouble indexValMax = splitMinSumOfOverlaps2 (m, M, maxSorted);
+	IntDouble indexValMin = splitMinSumOfOverlaps (m, M, minSorted);
+	IntDouble indexValMax = splitMinSumOfOverlaps (m, M, maxSorted);
 
 	double overlapMin = indexValMin.d ();
 	double overlapMax = indexValMax.d ();
@@ -412,43 +412,7 @@ class NodeSplitter<T> {
 	return a.getIntersectionArea (b);
     }
 
-    private IntDouble splitMinSumOfOverlaps (int m, int M, int dimensions, List<MBR> mbrList) {
-	// TODO: unclear if this is correct or not, either min sum should be returned or total sum
-	int numDistributions = M - 2 * m + 2; // >= 2
-	double minSumOfOverlaps = Double.POSITIVE_INFINITY;
-	int minOverlapSplitIdx = -1;
-	double minAreaValue = Double.POSITIVE_INFINITY;
-	// may be reduced to O(d * M) if rolling min/max are kept for firstMbr, secondMbr
-	// O(d * M^2)
-	for (int k = 1; k <= numDistributions; k++) {
-	    int splitIdx = m - 1 + k;
-	    // first group contains (m-1)+k entries
-	    // second group contains the rest (M+1 - (m-1+k) = M+2-m-k) >= m+1
-	    List<MBR> first = mbrList.subList (0, splitIdx);
-	    List<MBR> second = mbrList.subList (splitIdx, mbrList.size ());
-
-	    // O(d * M)
-	    SimpleMBR firstMbr = new SimpleMBR (first, dimensions);
-	    SimpleMBR secondMbr = new SimpleMBR (second, dimensions);
-
-	    double sumOfOverlaps = firstMbr.getIntersectionArea (secondMbr);
-
-	    if (sumOfOverlaps < minSumOfOverlaps) {
-		minSumOfOverlaps = sumOfOverlaps;
-		minOverlapSplitIdx = splitIdx;
-		minAreaValue = getAreaValue (firstMbr, secondMbr);
-	    } else if (sumOfOverlaps == minSumOfOverlaps) {
-		double areaValueCurrent = getAreaValue (firstMbr, secondMbr);
-		if (areaValueCurrent < minAreaValue) {
-		    minOverlapSplitIdx = splitIdx;
-		    minAreaValue = areaValueCurrent;
-		}
-	    }
-	}
-	return new IntDouble (minOverlapSplitIdx, minSumOfOverlaps);
-    }
-
-    private IntDouble splitMinSumOfOverlaps2 (int m, int M, List<MBR> mbrList) {
+    private IntDouble splitMinSumOfOverlaps (int m, int M, List<MBR> mbrList) {
 	int numDistributions = M - 2 * m + 2; // >= 2
 	double minSumOfOverlaps = Double.POSITIVE_INFINITY;
 	int minOverlapSplitIdx = -1;
@@ -467,8 +431,6 @@ class NodeSplitter<T> {
 	for (int i = nMbrs - 2; i >= 0; i--) {
 	    suffixes[i] = suffixes[i + 1].union (mbrList.get (i));
 	}
-
-
 
 	for (int k = 1; k <= numDistributions; k++) {
 	    int splitIdx = m - 1 + k;
@@ -495,51 +457,28 @@ class NodeSplitter<T> {
 	return new IntDouble (minOverlapSplitIdx, minSumOfOverlaps);
     }
 
-    private double splitMinSumOfMargins (int m, int M, int dimensions, List<MBR> mbrList) {
-	int numDistributions = M - 2 * m + 2;
-	double minSumOfMargins = Double.POSITIVE_INFINITY;
-	// TODO: seems like the algorithm needs the sum of the margin-values over all distributions
-	// then chooses the axis depending on this sum
-	// O(d * M^2)
-	for (int k = 1; k <= numDistributions; k++) {
-	    int splitIdx = m - 1 + k;
-	    // first group contains (m-1)+k entries
-	    // second group contains the test (M+1 - (m-1+k) = M+2-m-k)
-	    List<MBR> first = mbrList.subList (0, splitIdx);
-	    List<MBR> second = mbrList.subList (splitIdx, mbrList.size ());
-
-	    // O(M * d)
-	    MBR firstMbr = new SimpleMBR (first, dimensions);
-	    MBR secondMbr = new SimpleMBR (second, dimensions);
-
-	    double sumOfMargins = firstMbr.margin () + secondMbr.margin ();
-
-	    if (sumOfMargins < minSumOfMargins) {
-		minSumOfMargins = sumOfMargins;
-	    }
-	}
-	return minSumOfMargins;
-    }
-
-    /**
-     * @param m
-     * @param M
-     * @param dimensions
-     * @param mbrList
-     * @return
-     */
-    private double sumOfDistributionMargins (int m, int M, int dimensions, List<MBR> mbrList) {
+    private double sumOfDistributionMargins (int m, int M, List<MBR> mbrList) {
 	int numDistributions = M - 2 * m + 2;
 	double totalSumOfMargins = 0;
-	// O(d * M^2)
+	// O (d * M)
+	int nMbrs = mbrList.size ();
+	MBR[] prefixes = new MBR[nMbrs];
+	MBR[] suffixes = new MBR[nMbrs];
+	prefixes[0] = mbrList.get (0);
+	for (int i = 1; i < nMbrs; i++) {
+	    prefixes[i] = prefixes[i - 1].union (mbrList.get (i));
+	}
+	suffixes[nMbrs - 1] = mbrList.get (nMbrs - 1);
+	for (int i = nMbrs - 2; i >= 0; i--) {
+	    suffixes[i] = suffixes[i + 1].union (mbrList.get (i));
+	}
+
 	for (int k = 1; k <= numDistributions; k++) {
 	    // first group contains (m-1)+k entries
 	    // second group contains the test (M+1 - (m-1+k) = M+2-m-k)
-	    List<MBR> first = mbrList.subList (0, m - 1 + k);
-	    List<MBR> second = mbrList.subList (m - 1 + k, mbrList.size ());
-	    // O(d * M)
-	    MBR firstMbr = new SimpleMBR (first, dimensions);
-	    MBR secondMbr = new SimpleMBR (second, dimensions);
+	    int mid = m - 1 + k;
+	    MBR firstMbr = prefixes[mid - 1];
+	    MBR secondMbr = suffixes[mid];
 
 	    totalSumOfMargins += firstMbr.margin () + secondMbr.margin ();
 	}
