@@ -57,11 +57,9 @@ class InternalNode<T> extends NodeBase<Node<T>, T> {
     private double calculateChildOverlap (MBR childMBR, int childIdx, MBRConverter<T> converter) {
 	double overlap = 0.0;
 
-	SimpleMBR xMbr = new SimpleMBR (childMBR); // temporary mess
-
 	for (int i = 0; i < size (); i++) {
 	    if (i != childIdx) {
-		overlap += xMbr.getIntersectionArea (get (i).getMBR (converter));
+		overlap += childMBR.getIntersectionArea (get (i).getMBR (converter));
 	    }
 	}
 	return overlap;

@@ -72,20 +72,14 @@ class PrimitiveContainer<T> {
     }
 
     private void swapDbl (int x, int y) {
-	// TODO: reuse small array for one instance of the class
 	final int di = x * B;
 	final int dj = y * B;
-	double[] tmp = new double[B];
-	// make a copy of double contents of O[x]
-	System.arraycopy (D, di, tmp, 0, B);
-
-	// set double contents of O[x] = double contents of O[y]
-	//System.arraycopy(D, B*y, D, B*x, B);
+	// swap blocks x and y
 	for (int j = 0; j < B; j++) {
+	    double temp = D[di + j];
 	    D[di + j] = D[dj + j];
+	    D[dj + j] = temp;
 	}
-	// set double contents of O[y] = double contents of tmp (originally O[x] contents)
-	System.arraycopy (tmp, 0, D, dj, B);
     }
 
     public void swap (int i, int j) {
