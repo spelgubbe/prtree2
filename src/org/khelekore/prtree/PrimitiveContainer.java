@@ -47,12 +47,7 @@ class PrimitiveContainer<T> {
     }
 
     private int translateIndex (int i) {
-	int idx = begin + i;
-	if (idx < 0) {
-	    System.out.println ("Error: negative array index encountered.");
-	    System.out.println ("Begin: " + begin + " End: " + end + " B: " + B);
-	}
-	return idx;
+	return begin + i;
     }
 
     public T getT (int i) {
@@ -83,16 +78,8 @@ class PrimitiveContainer<T> {
     }
 
     public void swap (int i, int j) {
-	if (i < 0 || i >= O.size () || j < 0 || j >= O.size ()) {
-	    System.out.println ("############ bad swap ############");
-	    return;
-	}
 	i = translateIndex (i);
 	j = translateIndex (j);
-	if (i < begin || i >= end || j < begin || j >= end) {
-	    System.out.println ("############ bad swap ############");
-	    return;
-	}
 	swapObj (i, j);
 	swapDbl (i, j);
     }
