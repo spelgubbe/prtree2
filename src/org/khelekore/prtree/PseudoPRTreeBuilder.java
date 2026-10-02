@@ -38,7 +38,10 @@ class PseudoPRTreeBuilder<T, N> {
 	if (input.size () < k)
 	    k = input.size ();
 	List<T> tmpView = input.subList (input.size () - k, input.size ());
-	output.addAll (tmpView);
+	int size = tmpView.size ();
+	for (int i = 0; i < size; i++) {
+	    output.add (tmpView.get (i)); // not using addAll to avoid a SubList#toArray allocation
+	}
 	return tmpView.size ();
     }
 
@@ -48,8 +51,12 @@ class PseudoPRTreeBuilder<T, N> {
 	if (input.size () < k)
 	    k = input.size ();
 	// take a slice of the last k elements, or fewer in some cases
-	PrimitiveContainer<T> tmpView = input.slice (input.size () - k, input.size ());
-	output.addAll (tmpView.objectSubList ());
+	PrimitiveContainer<T> tmpContainer = input.slice (input.size () - k, input.size ());
+	List<T> tmpView = tmpContainer.objectSubList ();
+	int size = tmpView.size ();
+	for (int i = 0; i < size; i++) {
+	    output.add (tmpView.get (i)); // not using addAll to avoid a SubList#toArray allocation
+	}
 	return tmpView.size ();
     }
 
