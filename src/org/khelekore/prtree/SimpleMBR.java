@@ -21,7 +21,16 @@ public class SimpleMBR implements MBR {
      * @param values the min and max values for each dimension.
      */
     public SimpleMBR (double... values) {
-	this.values = values.clone ();
+	this (values, false);
+    }
+
+    SimpleMBR (double[] values, boolean copy) {
+	if (copy) {
+	    this.values = values.clone ();
+	} else {
+	    this.values = values;
+	}
+
     }
 
     /**
