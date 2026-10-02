@@ -131,10 +131,16 @@ class LeafNode<T> extends NodeBase<T, T> {
 
     // computing the MBR by creating O(size) MBRs
     public MBR computeMBR (MBRConverter<T> converter) {
-	MBR ret = null;
-	for (int i = 0, s = size (); i < s; i++)
-	    ret = getUnion (ret, getMBR (get (i), converter));
-	return ret;
+	List<T> data = getData ();
+	if (data.isEmpty ()) {
+	    return null; // probably illegal state to have a node of size 0, but ok.
+	}
+	int dims = converter.getDimensions ();
+	double[] mbrValues = null;
+	for (T child : data) {
+	    mbrValues = SimpleMBR.unionInto (child, converter, dims, mbrValues);
+	}
+	return new SimpleMBR (mbrValues);
     }
 
     public void expand (MBR mbr, Predicate<T> filter, MBRConverter<T> converter, List<T> found,

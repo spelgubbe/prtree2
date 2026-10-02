@@ -22,10 +22,17 @@ class InternalNode<T> extends NodeBase<Node<T>, T> {
 
     @Override
     public MBR computeMBR (MBRConverter<T> converter) {
-	MBR ret = null;
-	for (int i = 0, s = size (); i < s; i++)
-	    ret = getUnion (ret, get (i).getMBR (converter));
-	return ret;
+	List<Node<T>> data = getData ();
+	if (data.isEmpty ()) {
+	    return null; // probably illegal state to have a node of size 0, but ok.
+	}
+	int dims = converter.getDimensions ();
+	double[] mbrValues = null;
+	for (Node<T> child : data) {
+	    MBR childMbr = child.getMBR (converter);
+	    mbrValues = SimpleMBR.unionInto (childMbr, dims, mbrValues);
+	}
+	return new SimpleMBR (mbrValues);
     }
 
     private int chooseLeafLocalGuttman (MBR cmpMBR, MBRConverter<T> converter) {

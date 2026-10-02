@@ -91,6 +91,38 @@ public class SimpleMBR implements MBR {
 	return n;
     }
 
+    static double[] unionInto (MBR mbr, int dims, double[] dest) {
+	if (dest == null) {
+	    dest = new double[mbr.getDimensions () * 2];
+	    for (int i = 0; i < dims; i++) {
+		dest[2 * i] = mbr.getMin (i);
+		dest[2 * i + 1] = mbr.getMax (i);
+	    }
+	    return dest;
+	}
+	for (int i = 0; i < dims; i++) {
+	    dest[2 * i] = Math.min (dest[2 * i], mbr.getMin (i));
+	    dest[2 * i + 1] = Math.max (dest[2 * i + 1], mbr.getMax (i));
+	}
+	return dest;
+    }
+
+    static <T> double[] unionInto (T t, MBRConverter<T> converter, int dims, double[] dest) {
+	if (dest == null) {
+	    dest = new double[converter.getDimensions () * 2];
+	    for (int i = 0; i < dims; i++) {
+		dest[2 * i] = converter.getMin (i, t);
+		dest[2 * i + 1] = converter.getMax (i, t);
+	    }
+	    return dest;
+	}
+	for (int i = 0; i < dims; i++) {
+	    dest[2 * i] = Math.min (dest[2 * i], converter.getMin (i, t));
+	    dest[2 * i + 1] = Math.max (dest[2 * i + 1], converter.getMax (i, t));
+	}
+	return dest;
+    }
+
     public double getUnionArea (MBR mbr) {
 	int dims = getDimensions ();
 	double area = 1.0;
