@@ -1,6 +1,7 @@
 package org.khelekore.prtree;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 class PseudoPRTreeBuilder<T, N> {
     final NodeComparators<T> comparators;
@@ -461,7 +462,7 @@ class PseudoPRTreeBuilder<T, N> {
 	    if (left == right)
 		return A.get (left);
 
-	    int pIndex = new Random ().nextInt (right - left + 1) + left;
+	    int pIndex = ThreadLocalRandom.current ().nextInt (left, right + 1);
 	    pIndex = partition (A, left, right, pIndex, comp);
 
 	    if (pIndex == k - 1)
@@ -475,7 +476,7 @@ class PseudoPRTreeBuilder<T, N> {
 	    if (left == right)
 		return A.getD (left, axis);
 
-	    int pIndex = new Random ().nextInt (right - left + 1) + left;
+	    int pIndex = ThreadLocalRandom.current ().nextInt (left, right + 1);
 	    pIndex = partitionHoare (A, left, right, pIndex, axis);
 
 	    if (pIndex == k - 1)
@@ -494,7 +495,7 @@ class PseudoPRTreeBuilder<T, N> {
 	    if (left == right)
 		return A.getD (left, axis);
 
-	    int pIndex = new Random ().nextInt (right - left + 1) + left;
+	    int pIndex = ThreadLocalRandom.current ().nextInt (left, right + 1);
 	    pIndex = partitionHoareReverse (A, left, right, pIndex, axis);
 
 	    if (pIndex == k - 1)
