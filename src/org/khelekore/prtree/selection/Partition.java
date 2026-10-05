@@ -31,27 +31,6 @@ public class Partition {
 	}
     }
 
-    public static <T> int partitionHoareReverse (List<T> A, int start, int end, int pIndex, Comparator<T> comp) {
-	T pivot = A.get (pIndex);
-	int lowIndex = start - 1;
-	int highIndex = end + 1;
-	while (true) {
-	    do {
-		lowIndex++;
-	    } while (comp.compare (A.get (lowIndex), pivot) > 0);
-
-	    do {
-		highIndex--;
-	    } while (comp.compare (A.get (highIndex), pivot) < 0);
-
-	    if (lowIndex < highIndex) {
-		Collections.swap (A, lowIndex, highIndex);
-	    } else {
-		return highIndex;
-	    }
-	}
-    }
-
     public static <T> int partitionHoare (PrimitiveContainer<T> A, int start, int end, int pIndex, final int axis) {
 	int lowIndex = start - 1;
 	int highIndex = end + 1;
