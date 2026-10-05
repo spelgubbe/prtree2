@@ -21,30 +21,11 @@ abstract class NodeBase<N, T> implements Node<T> {
 	for (Object item : data) {
 	    this.data.add ((N) item);
 	}
-	assertAllChildrenOfSameType ();
 
-    }
-
-    private void assertAllChildrenOfSameType () {
-	if (size () > 0) {
-	    Class<?> firstClass = this.data.get (0).getClass ();
-	    if (this.data.get (0) instanceof Node) {
-		for (int j = 0; j < size (); j++) {
-		    Class<?> secondClass = get (j).getClass ();
-		    if (firstClass != secondClass) {
-			System.err.println (
-				"[" + getClass ().getName () + "] Invalid insert height: " + firstClass + " and "
-				+ secondClass + " as children in the same node.");
-		    }
-		    assert firstClass == secondClass;
-		}
-	    }
-	}
     }
 
     public NodeBase (List<N> data) {
 	this.data = data;
-	assertAllChildrenOfSameType ();
     }
 
     public abstract NodeBase<N, T> create (List<N> data);
@@ -64,7 +45,6 @@ abstract class NodeBase<N, T> implements Node<T> {
     @SuppressWarnings ("unchecked")
     public void insertChild (Object child) {
 	data.add ((N) child); // This design could be better
-	assertAllChildrenOfSameType ();
     }
 
     public boolean removeChild (Object ref) {
@@ -89,7 +69,6 @@ abstract class NodeBase<N, T> implements Node<T> {
 
     public List<Node<T>> rStarSplit (int minBranchFactor, int maxBranchFactor, MBRConverter<T> converter) {
 	// maybe an abstract method to get the correct comparator will be needed here
-
 	return splitNodeRStar (data, minBranchFactor, maxBranchFactor, converter, comparators (converter));
     }
 
@@ -102,7 +81,6 @@ abstract class NodeBase<N, T> implements Node<T> {
     }
 
     public void recomputeMBR (MBRConverter<T> converter) {
-	//System.out.println("RecomputeMBR is called");
 	mbr = computeMBR (converter);
     }
 
@@ -113,8 +91,6 @@ abstract class NodeBase<N, T> implements Node<T> {
     public MBR getMBR (T t, MBRConverter<T> converter) {
 	return new SimpleMBR (t, converter);
     }
-
-    //public abstract List<Node<T>> splitNode(List<N> nodes, int minBranchFactor, MBRConverter<T> converter);
 
     private Pair<List<N>> quadraticSplit (List<N> nodes, int minBranchFactor, int maxBranchFactor,
 					  MBRConverter<T> converter) {
@@ -143,27 +119,13 @@ abstract class NodeBase<N, T> implements Node<T> {
 	Node<T> second = create (secondList);
 
 	if (firstList.isEmpty () || secondList.isEmpty ()) {
-	    System.out.println ("At least one empty node produced by split");
+	    throw new IllegalStateException ("At least one empty node produced by split");
 	}
 
 	res.add (first);
 	res.add (second);
 
 	return res;
-    }
-
-    private List<Node<T>> createNodeListFromSplit (Pair<List<N>> split) {
-	List<N> firstList = split.a ();
-	List<N> secondList = split.b ();
-
-	Node<T> first = create (firstList);
-	Node<T> second = create (secondList);
-
-	if (firstList.isEmpty () || secondList.isEmpty ()) {
-	    System.err.println ("At least one empty node produced by split");
-	}
-
-	return List.of (first, second);
     }
 
     public List<Node<T>> splitNodeRStar (List<N> nodes, int minBranchFactor, int maxBranchFactor,
@@ -180,7 +142,7 @@ abstract class NodeBase<N, T> implements Node<T> {
 	Node<T> second = create (secondList);
 
 	if (firstList.isEmpty () || secondList.isEmpty ()) {
-	    System.out.println ("At least one empty node produced by split");
+	    throw new IllegalStateException ("At least one empty node produced by split");
 	}
 
 	res.add (first);
@@ -212,8 +174,6 @@ abstract class NodeBase<N, T> implements Node<T> {
     public Comparator<N> distFromCenterComparator (MBRConverter<T> converter) {
 	return (a, b) -> Double.compare (distanceFromCenter (b, converter), distanceFromCenter (a, converter));
     }
-
-    //public abstract List<N> reinsertionCandidates(float p, int minBranchFactor, int maxBranchFactor, MBRConverter<T> converter);
 
     // R*-tree O(MlogM) finds out what nodes to reinsert instead of performing a split
     public List<N> getReinsertionCandidates (float p, int minBranchFactor, int maxBranchFactor,
@@ -267,12 +227,5 @@ abstract class NodeBase<N, T> implements Node<T> {
 	//System.out.printf("bulkRemove: ending with size = %d\n", size());
 	// recompute MBR as children may have been removed
 	recomputeMBR (converter);
-    }
-
-    public MBR getUnion (MBR m1, MBR m2) {
-	// TODO: fix bug where m2 is null, then this explodes
-	if (m1 == null)
-	    return m2;
-	return m1.union (m2);
     }
 }

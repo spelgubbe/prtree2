@@ -209,7 +209,7 @@ class PseudoPRTreeBuilder<T, N> {
 	}
     }
 
-    private abstract class Problem<I, X> {
+    public abstract class Problem<I, X> {
 	public I input;
 	public int depth;
 
@@ -292,7 +292,6 @@ class PseudoPRTreeBuilder<T, N> {
 	    Problem<I, X> p = q.pop ();
 	    p.enqueueChildren (q);
 	    int depth = p.depth;
-	    //System.out.println("Depth is " + depth + " and n is " + n + " and log2n is " + log2n);
 	    bfsList.get (depth).add (p);
 
 	}
@@ -348,51 +347,9 @@ class PseudoPRTreeBuilder<T, N> {
 	}
     }
 
-    private void assertLastElementsAreMaximal (PrimitiveContainer<T> A, int k, final int axis) {
-	if (A.size () <= k)
-	    return;
-	double minInLastK = findMin (A.slice (A.size () - k, A.size ()).dataView (axis));
-	double maxInPrevPart = findMax (A.slice (0, A.size () - k).dataView (axis));
-	boolean cond = minInLastK >= maxInPrevPart;
-	if (cond)
-	    System.err.println ("Assertion failed that checks whether last elements are maximal after quickselect");
-	assert cond;
-    }
-
-    private void assertLastElementsAreMinimal (PrimitiveContainer<T> A, int k, final int axis) {
-	if (A.size () <= k)
-	    return;
-	double maxInLastK = findMax (A.slice (A.size () - k, A.size ()).dataView (axis));
-	double minInPrevPart = findMin (A.slice (0, A.size () - k).dataView (axis));
-	boolean cond = maxInLastK <= minInPrevPart;
-	if (cond)
-	    System.err.println (
-		    "Assertion failed that checks whether last elements are minimal after reverse quickselect");
-	assert cond;
-    }
-
-    private double findMax (double[] D) {
-	double max = Double.MIN_VALUE;
-	for (double v : D) {
-	    if (v > max)
-		max = v;
-	}
-	return max;
-    }
-
-    private double findMin (double[] D) {
-	double min = Double.MAX_VALUE;
-	for (double v : D) {
-	    if (v < min)
-		min = v;
-	}
-	return min;
-    }
-
     public void pprListBuild (Collection<? extends T> input, NodeFactoryGeneric<T, N> nf, List<N> leafNodes) {
 	List<List<T>> output = new ArrayList<> ();
 	List<T> in = new ArrayList<> (input);
-	Collections.shuffle (in);
 	pprBuild (new ListProblem (in, 0), output);
 	extractListsIntoNodes (output, nf, leafNodes);
     }
@@ -401,14 +358,10 @@ class PseudoPRTreeBuilder<T, N> {
 				   MBRValueExtractor<T> valueExtractor) {
 	List<List<T>> output = new ArrayList<> ();
 	List<T> in = new ArrayList<> (input);
-	Collections.shuffle (in);
 
 	double[] mbrData = extractMBRValues (in, valueExtractor, dims);
-	//System.out.println("A total of " + mbrData.length + " doubles collected for MBRs of" + in.size() + " nodes/data objects.");
 	PrimitiveContainer<T> container = new PrimitiveContainer<> (in, mbrData, 2 * dims);
-	//System.out.println("PrimitiveContainer of size " + container.size() + " built for the " + in.size() + " nodes.");
 
-	// shuffle before or after collecting data?
 	pprBuild (new ContainerProblem (container, 0), output);
 	extractListsIntoNodes (output, nf, leafNodes);
     }
@@ -417,7 +370,6 @@ class PseudoPRTreeBuilder<T, N> {
 					 List<N> leafNodes) {
 	List<List<T>> output = new ArrayList<> ();
 	List<T> in = new ArrayList<> (input);
-	Collections.shuffle (in);
 	pprBuildParallel (new ListProblem (in, 0), output);
 	extractListsIntoNodes (output, nf, leafNodes);
     }
@@ -426,14 +378,8 @@ class PseudoPRTreeBuilder<T, N> {
 						  List<N> leafNodes, MBRValueExtractor<T> valueExtractor) {
 	List<List<T>> output = new ArrayList<> ();
 	List<T> in = new ArrayList<> (input);
-	Collections.shuffle (in);
-
 	double[] mbrData = extractMBRValues (in, valueExtractor, dims);
-	//System.out.println("A total of " + mbrData.length + " doubles collected for MBRs of" + in.size() + " nodes/data objects.");
 	PrimitiveContainer<T> container = new PrimitiveContainer<> (in, mbrData, 2 * dims);
-	//System.out.println("PrimitiveContainer of size " + container.size() + " built for the " + in.size() + " nodes.");
-
-	// shuffle before or after collecting data?
 	pprBuildParallel (new ContainerProblem (container, 0), output);
 	extractListsIntoNodes (output, nf, leafNodes);
     }

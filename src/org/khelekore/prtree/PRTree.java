@@ -788,18 +788,6 @@ public class PRTree<T> {
 	    return path.subList (0, depth);
 	}
 
-	private void assertAllChildrenHaveSameClass (Node<T> x) {
-	    if (x instanceof InternalNode<T> iNode) {
-		Class<?> t = null;
-		if (iNode.size () > 0) {
-		    t = iNode.getData ().get (0).getClass ();
-		}
-		for (Node<T> child : iNode.getData ()) {
-		    assert child.getClass () == t;
-		}
-	    }
-	}
-
 	private void rStarTreeInsert (T x) {
 	    rStarTreeInsertDataInternal (x, new HashSet<> (), true);
 	}
