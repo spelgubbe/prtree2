@@ -9,7 +9,7 @@ import java.util.List;
  * The sole reason for this class is to improve performance in such cases.
  * @param <T> Type of the object.
  */
-class PrimitiveContainer<T> {
+public class PrimitiveContainer<T> {
     // List of objects
     final private List<T> O;
     // array of associated double values
@@ -107,7 +107,7 @@ class PrimitiveContainer<T> {
 
     /**
      * Create a view of the collection with swaps permitted. Not concurrency safe unless no slices overlap between
-     * threads. There are zero guarantees given if this is used in erroneous ways. (like end < begin)
+     * threads. There are zero guarantees given if this is used in erroneous ways. (like end &lt; begin)
      * @param b Start index of the view (inclusive)
      * @param e End index of the view (exclusive)
      * @return PrimitiveContainer that is a subview of this one, in O(1) time.

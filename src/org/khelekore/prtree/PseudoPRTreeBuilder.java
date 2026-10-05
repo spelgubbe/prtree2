@@ -1,11 +1,12 @@
 package org.khelekore.prtree;
 
+import org.khelekore.prtree.selection.KthElement;
+
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 
 class PseudoPRTreeBuilder<T, N> {
     final NodeComparators<T> comparators;
-    final KthElement kthElement = new KthElement ();
+    final KthElement<T> kthElement = new KthElement<> ();
     private final List<Comparator<T>> compList = new ArrayList<> ();
     private final int dims;
     private final int branchFactor;
@@ -84,10 +85,8 @@ class PseudoPRTreeBuilder<T, N> {
 	    kthElement.putKLargestLast (input, branchFactor, compList.get (i));
 	    int extractedNum = removeKElementsFromBackInto (input, branchFactor, result.get (result.size () - 1));
 	    input = input.subList (0, input.size () - extractedNum);
-
 	}
 
-	//System.out.println("Produced " +numPriorityLeaves+ " priority leafs");
 	return input;
     }
 
@@ -384,219 +383,5 @@ class PseudoPRTreeBuilder<T, N> {
 	extractListsIntoNodes (output, nf, leafNodes);
     }
 
-    private class KthElement {
-	public void putKLargestLast (List<T> A, int k, Comparator<T> comp) {
-	    if (A.size () <= k)
-		return;
-	    // element at pos A.size - k is placed where it would be in sorted order
-	    // and whatever is to the sides are at least on the right side of it
-	    quickSelect (A, 0, A.size () - 1, A.size () - k, comp);
-	}
 
-	public void putKSmallestLast (List<T> A, int k, Comparator<T> comp) {
-	    if (A.size () <= k)
-		return;
-	    quickSelect (A, 0, A.size () - 1, k, comp);
-	}
-
-	public void putKLargestLast (PrimitiveContainer<T> A, int k, final int axis) {
-	    if (A.size () <= k)
-		return;
-	    quickSelect (A, 0, A.size () - 1, A.size () - k, axis);
-	}
-
-	public void putKSmallestLast (PrimitiveContainer<T> A, int k, final int axis) {
-	    if (A.size () <= k)
-		return;
-	    quickSelectReverse (A, 0, A.size () - 1, A.size () - k, axis);
-	}
-
-	private T quickSelect (List<T> A, int left, int right, int k, Comparator<T> comp) {
-	    if (left == right)
-		return A.get (left);
-
-	    int pIndex = ThreadLocalRandom.current ().nextInt (left, right + 1);
-	    pIndex = partition (A, left, right, pIndex, comp);
-
-	    if (pIndex == k - 1)
-		return A.get (pIndex);
-	    else if (pIndex < k - 1)
-		return quickSelect (A, pIndex + 1, right, k, comp);
-	    return quickSelect (A, left, pIndex - 1, k, comp);
-	}
-
-	private double quickSelect (PrimitiveContainer<T> A, int left, int right, int k, final int axis) {
-	    if (left == right)
-		return A.getD (left, axis);
-
-	    int pIndex = ThreadLocalRandom.current ().nextInt (left, right + 1);
-	    pIndex = partitionHoare (A, left, right, pIndex, axis);
-
-	    if (pIndex == k - 1)
-		return A.getD (pIndex, axis);
-	    else if (pIndex < k - 1) {
-		// don't want left pointer to cross right
-		int newLeft = Math.min (right, pIndex + 1);
-		return quickSelect (A, newLeft, right, k, axis);
-	    }
-	    // don't want right pointer to cross left
-	    int newRight = Math.max (left, pIndex - 1);
-	    return quickSelect (A, left, newRight, k, axis);
-	}
-
-	private double quickSelectReverse (PrimitiveContainer<T> A, int left, int right, int k, final int axis) {
-	    if (left == right)
-		return A.getD (left, axis);
-
-	    int pIndex = ThreadLocalRandom.current ().nextInt (left, right + 1);
-	    pIndex = partitionHoareReverse (A, left, right, pIndex, axis);
-
-	    if (pIndex == k - 1)
-		return A.getD (pIndex, axis);
-	    else if (pIndex < k - 1) {
-		// don't want left pointer to cross right
-		int newLeft = Math.min (right, pIndex + 1);
-		return quickSelectReverse (A, newLeft, right, k, axis);
-	    }
-	    // don't want right pointer to cross left
-	    int newRight = Math.max (left, pIndex - 1);
-	    return quickSelectReverse (A, left, newRight, k, axis);
-	}
-
-	private int partition (List<T> A, int left, int right, int pIndex, Comparator<T> comp) {
-	    T pivot = A.get (pIndex);
-	    swap (A, pIndex, right);
-	    pIndex = left;
-
-	    for (int i = left; i <= right; i++) {
-		T test = A.get (i);
-		if (comp.compare (test, pivot) <= 0) {
-		    swap (A, i, pIndex++);
-		}
-	    }
-
-	    return pIndex - 1;
-	}
-
-	private int partitionHoare (List<T> A, int start, int end, int pIndex, Comparator<T> comp) {
-	    T pivot = A.get (pIndex);
-	    int lowIndex = start - 1;
-	    int highIndex = end + 1;
-	    while (true) {
-		do {
-		    lowIndex++;
-		} while (comp.compare (A.get (lowIndex), pivot) < 0);
-
-		do {
-		    highIndex--;
-		} while (comp.compare (A.get (highIndex), pivot) > 0);
-
-		if (lowIndex < highIndex) {
-		    Collections.swap (A, lowIndex, highIndex);
-		} else {
-		    return highIndex;
-		}
-	    }
-	}
-
-	private int partitionHoareReverse (List<T> A, int start, int end, int pIndex, Comparator<T> comp) {
-	    T pivot = A.get (pIndex);
-	    int lowIndex = start - 1;
-	    int highIndex = end + 1;
-	    while (true) {
-		do {
-		    lowIndex++;
-		} while (comp.compare (A.get (lowIndex), pivot) > 0);
-
-		do {
-		    highIndex--;
-		} while (comp.compare (A.get (highIndex), pivot) < 0);
-
-		if (lowIndex < highIndex) {
-		    Collections.swap (A, lowIndex, highIndex);
-		} else {
-		    return highIndex;
-		}
-	    }
-	}
-
-	public int partitionHoare (PrimitiveContainer<T> A, int start, int end, int pIndex, final int axis) {
-	    int lowIndex = start - 1;
-	    int highIndex = end + 1;
-	    double pivot = A.getD (pIndex, axis);
-	    while (true) {
-		do {
-		    lowIndex++;
-		}
-		while (A.getD (lowIndex, axis) < pivot);
-		do {
-		    highIndex--;
-		}
-		while (A.getD (highIndex, axis) > pivot);
-
-		if (lowIndex < highIndex) {
-		    A.swap (lowIndex, highIndex);
-		} else {
-		    return highIndex;
-		}
-	    }
-	}
-
-	public int partitionHoareReverse (PrimitiveContainer<T> A, int start, int end, int pIndex, final int axis) {
-	    int lowIndex = start - 1;
-	    int highIndex = end + 1;
-	    double pivot = A.getD (pIndex, axis);
-	    while (true) {
-		do {
-		    lowIndex++;
-		} while (A.getD (lowIndex, axis) > pivot);
-		do {
-		    highIndex--;
-		}
-		while (A.getD (highIndex, axis) < pivot);
-
-		if (lowIndex < highIndex) {
-		    A.swap (lowIndex, highIndex);
-		} else {
-		    return highIndex;
-		}
-	    }
-	}
-
-	private int partition (PrimitiveContainer<T> A, int left, int right, int pIndex, final int axis) {
-	    double pivot = A.getD (pIndex, axis);
-	    A.swap (pIndex, right);
-	    pIndex = left;
-
-	    for (int i = left; i <= right; i++) {
-		double test = A.getD (i, axis);
-		if (test <= pivot) {
-		    A.swap (i, pIndex++);
-		}
-	    }
-
-	    return pIndex - 1;
-	}
-
-	private int partitionReverse (PrimitiveContainer<T> A, int left, int right, int pIndex, final int axis) {
-	    double pivot = A.getD (pIndex, axis);
-	    A.swap (pIndex, right);
-	    pIndex = left;
-
-	    for (int i = left; i <= right; i++) {
-		double test = A.getD (i, axis);
-		if (test >= pivot) {
-		    A.swap (i, pIndex++);
-		}
-	    }
-
-	    return pIndex - 1;
-	}
-
-	private <X> void swap (List<X> A, int x, int y) {
-	    X temp = A.get (x);
-	    A.set (x, A.get (y));
-	    A.set (y, temp);
-	}
-    }
 }
